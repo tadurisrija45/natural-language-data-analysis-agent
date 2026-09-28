@@ -20,3 +20,6 @@ data/user_uploads/*
 .idea/
 .vscode/
 *.log
+
+database/app.db-shm
+database/app.db-wal
