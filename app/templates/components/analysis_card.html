@@ -1,0 +1,25 @@
+<div class="card analysis-card">
+  <div>
+    <div class="analysis-card-top">
+      <div class="analysis-icon-box">{{ analysis.icon }}</div>
+      <div>
+        <div class="analysis-name">{{ analysis.title }}</div>
+        <div class="analysis-date">Created: {{ format_datetime(analysis.created_at) }}</div>
+      </div>
+    </div>
+    <div class="analysis-meta">
+      <span>{{ analysis.dataset_count }} {% if analysis.dataset_count == 1 %}dataset{% else %}datasets{% endif %} &bull; {{ analysis.question_count }} {% if analysis.question_count == 1 %}question{% else %}questions{% endif %}</span>
+      <span class="badge {% if analysis.status == 'Completed' %}badge-success{% else %}badge-teal{% endif %}">
+        ● {{ analysis.status }}
+      </span>
+    </div>
+  </div>
+  <div class="analysis-actions">
+    <a href="{{ url_for('analysis.view_analysis', analysis_id=analysis.id) }}" class="btn btn-secondary btn-sm">
+      View
+    </a>
+    <a href="{{ url_for('history.download_pdf', analysis_id=analysis.id) }}" class="btn btn-primary btn-sm">
+      PDF
+    </a>
+  </div>
+</div>

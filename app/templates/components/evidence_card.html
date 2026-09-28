@@ -1,0 +1,22 @@
+<div class="evidence-card">
+  <div class="evidence-header">
+    <div class="evidence-title">Traceable Evidence</div>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="openSourceDataModal({{ message.id }})">
+      🔍 View Source Data
+    </button>
+  </div>
+  <div style="font-size:0.8125rem; color:#64748B; margin-bottom:0.75rem;">
+    Source: <b>{{ message.evidence.source_dataset if message.evidence and message.evidence.source_dataset else 'Uploaded dataset' }}</b> &nbsp;&bull;&nbsp;
+    Rows analyzed: <b>{{ message.evidence.rows_analyzed if message.evidence and message.evidence.rows_analyzed else 0 }}</b>
+  </div>
+  {% if message.evidence and message.evidence.breakdown %}
+    <div class="evidence-breakdown-list">
+      {% for b in message.evidence.breakdown %}
+        <div class="evidence-breakdown-item">
+          <span style="font-weight:600; color:#0F172A;">{{ b.entity }}</span>
+          <span style="color:#0F766E; font-weight:700;">{{ b.formatted_value }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>

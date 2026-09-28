@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis History - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="history-header">
+  <div>
+    <h1 class="history-title">Analysis History</h1>
+    <p style="color:#64748B; font-size:0.9375rem; margin-top:0.25rem;">
+      Search and review past evidence-backed analysis sessions and reports.
+    </p>
+  </div>
+
+  <form method="GET" action="{{ url_for('history.history') }}" id="historySearchForm" class="search-box">
+    <span>🔍</span>
+    <input type="text" name="q" id="historySearchInput" class="search-input" value="{{ search_query or '' }}" placeholder="Search analyses, datasets, questions...">
+    {% if search_query %}
+      <a href="{{ url_for('history.history') }}" style="color:#64748B; font-size:0.8125rem;">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+{% if not analyses %}
+  <div class="empty-state-card">
+    <div style="font-size:2.5rem; margin-bottom:1rem;">📂</div>
+    <div class="empty-state-title">
+      {% if search_query %}
+        No analyses matched "{{ search_query }}"
+      {% else %}
+        No analysis sessions found
+      {% endif %}
+    </div>
+    <div class="empty-state-desc">
+      Start a new analysis to ask questions and generate traceable evidence reports.
+    </div>
+    <a href="{{ url_for('analysis.new_analysis') }}" class="btn btn-primary">
+      <span>+ New Analysis</span>
+    </a>
+  </div>
+{% else %}
+  <div class="history-card-grid">
+    {% for a in analyses %}
+      <div class="card analysis-card">
+        <div>
+          <div class="analysis-card-top">
+            <div class="analysis-icon-box">{{ a.icon }}</div>
+            <div>
+              <div class="analysis-name">{{ a.title }}</div>
+              <div class="analysis-date">Created: {{ format_datetime(a.created_at) }}</div>
+            </div>
+          </div>
+          <div class="analysis-meta">
+            <span>{{ a.dataset_count }} {% if a.dataset_count == 1 %}dataset{% else %}datasets{% endif %} &bull; {{ a.question_count }} {% if a.question_count == 1 %}question{% else %}questions{% endif %}</span>
+            <span class="badge {% if a.status == 'Completed' %}badge-success{% else %}badge-teal{% endif %}">
+              ● {{ a.status }}
+            </span>
+          </div>
+        </div>
+        <div class="analysis-actions">
+          <a href="{{ url_for('analysis.view_analysis', analysis_id=a.id) }}" class="btn btn-secondary btn-sm">
+            View
+          </a>
+          <a href="{{ url_for('history.download_pdf', analysis_id=a.id) }}" class="btn btn-primary btn-sm">
+            PDF
+          </a>
+          <form method="POST" action="{{ url_for('history.delete_analysis', analysis_id=a.id) }}" onsubmit="return confirm('Are you sure you want to delete this analysis session?');" style="display:inline;">
+            <button type="submit" class="btn btn-secondary btn-sm" title="Delete session" style="color:#DC2626;">
+              🗑️
+            </button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

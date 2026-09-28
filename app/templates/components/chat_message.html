@@ -1,0 +1,27 @@
+{% if message.question %}
+  <div class="user-msg-row">
+    <div class="user-bubble">{{ message.question }}</div>
+  </div>
+{% endif %}
+
+<div class="agent-response-card">
+  <div class="agent-answer-hero">
+    {{ message.answer }}
+  </div>
+
+  {% if message.chart_info and message.chart_info.data %}
+    {% include 'components/chart_card.html' %}
+  {% endif %}
+
+  {% include 'components/evidence_card.html' %}
+
+  {% if message.proof %}
+    {% include 'components/proof_card.html' %}
+  {% endif %}
+
+  {% include 'components/validation_card.html' %}
+
+  {% if message.insight %}
+    {% include 'components/insight_card.html' %}
+  {% endif %}
+</div>

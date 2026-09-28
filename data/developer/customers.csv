@@ -1,0 +1,16 @@
+customer_id,customer_name,region,segment
+CUST-001,Aarav Patel,South,Standard
+CUST-002,Bhavna Sharma,North,Premium
+CUST-003,Chirag Rao,West,Corporate
+CUST-004,Deepika Nair,South,Standard
+CUST-005,Eshan Verma,East,Premium
+CUST-006,Farah Khan,North,Corporate
+CUST-007,Gautam Menon,West,Standard
+CUST-008,Hema Sundaram,South,Standard
+CUST-009,Ishaan Joshi,East,Corporate
+CUST-010,Jaya Iyer,North,Premium
+CUST-011,Karan Gupta,West,Corporate
+CUST-012,Lavanya Deshmukh,South,Standard
+CUST-013,Manish Malhotra,North,Premium
+CUST-014,Neha Kapoor,East,Standard
+CUST-015,Omkar Kulkarni,West,Corporate

@@ -1,0 +1,28 @@
+{
+  "image_name": "dataagent-sandbox:latest",
+  "memory_limit": "512m",
+  "cpu_limit": "1.0",
+  "timeout_seconds": 15,
+  "network": "none",
+  "read_only_rootfs": false,
+  "allowed_modules": [
+    "pandas",
+    "numpy",
+    "scipy",
+    "math",
+    "datetime",
+    "json",
+    "collections",
+    "itertools",
+    "re"
+  ],
+  "blocked_builtins": [
+    "open",
+    "exec",
+    "eval",
+    "compile",
+    "__import__",
+    "input",
+    "breakpoint"
+  ]
+}

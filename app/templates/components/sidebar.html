@@ -1,0 +1,43 @@
+<aside class="sidebar" id="appSidebar">
+  <div>
+    <ul class="nav-menu">
+      <li>
+        <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard.dashboard' %}active{% endif %}">
+          <span class="nav-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('analysis.new_analysis') }}" class="nav-link {% if request.endpoint in ['analysis.new_analysis', 'analysis.chat_board'] %}active{% endif %}">
+          <span class="nav-icon">✨</span>
+          <span>New Analysis</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('history.history') }}" class="nav-link {% if request.endpoint in ['history.history', 'analysis.view_analysis'] %}active{% endif %}">
+          <span class="nav-icon">📜</span>
+          <span>History</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('account.profile') }}" class="nav-link {% if request.endpoint == 'account.profile' %}active{% endif %}">
+          <span class="nav-icon">👤</span>
+          <span>My Account</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('account.settings') }}" class="nav-link {% if request.endpoint == 'account.settings' %}active{% endif %}">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-bottom">
+    <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color:#DC2626;">
+      <span class="nav-icon">🚪</span>
+      <span>Logout</span>
+    </a>
+  </div>
+</aside>

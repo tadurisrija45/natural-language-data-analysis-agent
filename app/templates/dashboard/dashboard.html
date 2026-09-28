@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Hero Section -->
+<div class="hero-section">
+  <div>
+    <h1 class="hero-title">{{ greeting }}</h1>
+    <p class="hero-subtitle">Turn your data into clear, evidence-backed business insights.</p>
+  </div>
+  <div>
+    <a href="{{ url_for('analysis.new_analysis') }}" class="btn btn-primary">
+      <span>+ New Analysis</span>
+    </a>
+  </div>
+</div>
+
+<!-- Dynamic Activity Cards -->
+<div class="section-title">Your Activity</div>
+<div class="activity-grid">
+  <div class="card activity-card">
+    <div class="activity-label">Total Analyses</div>
+    <div class="activity-value">{{ metrics.total_analyses }}</div>
+  </div>
+  <div class="card activity-card">
+    <div class="activity-label">Datasets Used</div>
+    <div class="activity-value">{{ metrics.datasets_used }}</div>
+  </div>
+  <div class="card activity-card">
+    <div class="activity-label">Reports</div>
+    <div class="activity-value">{{ metrics.reports }}</div>
+  </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="section-title">How It Works</div>
+<div class="how-it-works-grid">
+  <div class="card step-card">
+    <div class="step-badge">1</div>
+    <div class="step-title">Upload your data</div>
+    <div class="step-desc">
+      Connect single or multiple CSV, Excel, JSON, or Parquet datasets with automatic relationship detection.
+    </div>
+  </div>
+
+  <div class="card step-card">
+    <div class="step-badge">2</div>
+    <div class="step-title">Ask a business question</div>
+    <div class="step-desc">
+      Type questions naturally without SQL or code. Ask multiple follow-up questions in the same session.
+    </div>
+  </div>
+
+  <div class="card step-card">
+    <div class="step-badge">3</div>
+    <div class="step-title">Verified & Evidence-Backed Insights</div>
+    <div class="step-desc">
+      AI determines the analysis, executes it in a secure sandbox, validates results, and provides traceable proof with charts.
+    </div>
+  </div>
+</div>
+
+<!-- Recent Analyses Section -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+  <div class="section-title" style="margin-bottom:0;">Recent Analyses</div>
+  {% if recent_analyses %}
+    <a href="{{ url_for('history.history') }}" style="font-size:0.875rem; font-weight:600;">View all history &rarr;</a>
+  {% endif %}
+</div>
+
+{% if not recent_analyses %}
+  <div class="empty-state-card">
+    <img src="{{ url_for('static', filename='images/empty-state.svg') }}" alt="No analyses yet" class="empty-state-img">
+    <div class="empty-state-title">No analyses yet.</div>
+    <div class="empty-state-desc">
+      Get started by uploading your first dataset and ask any business question in plain English.
+    </div>
+    <a href="{{ url_for('analysis.new_analysis') }}" class="btn btn-primary">
+      <span>+ New Analysis</span>
+    </a>
+  </div>
+{% else %}
+  <div class="analyses-grid">
+    {% for a in recent_analyses %}
+      <div class="card analysis-card">
+        <div>
+          <div class="analysis-card-top">
+            <div class="analysis-icon-box">{{ a.icon }}</div>
+            <div>
+              <div class="analysis-name">{{ a.title }}</div>
+              <div class="analysis-date">Created: {{ format_datetime(a.created_at) }}</div>
+            </div>
+          </div>
+          <div class="analysis-meta">
+            <span>{{ a.dataset_count }} {% if a.dataset_count == 1 %}dataset{% else %}datasets{% endif %} &bull; {{ a.question_count }} {% if a.question_count == 1 %}question{% else %}questions{% endif %}</span>
+            <span class="badge {% if a.status == 'Completed' %}badge-success{% else %}badge-teal{% endif %}">
+              ● {{ a.status }}
+            </span>
+          </div>
+        </div>
+        <div class="analysis-actions">
+          <a href="{{ url_for('analysis.chat_board', analysis_id=a.id) }}" class="btn btn-secondary btn-sm">
+            View
+          </a>
+          <a href="{{ url_for('history.download_pdf', analysis_id=a.id) }}" class="btn btn-primary btn-sm">
+            PDF
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

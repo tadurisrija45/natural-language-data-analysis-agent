@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}New Analysis - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+  <div class="upload-hero">
+    <h1 class="upload-title">New Analysis</h1>
+    <p class="upload-subtitle">Upload your dataset and ask questions in natural language.</p>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" action="{{ url_for('analysis.new_analysis') }}">
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">📁</div>
+      <div style="font-size:1.125rem; font-weight:600; color:#0F172A; margin-bottom:0.375rem;">
+        Click to browse or drag and drop files here
+      </div>
+      <div style="font-size:0.875rem; color:#64748B;">
+        Supports CSV, Excel (.xlsx, .xls), JSON, and Parquet. Multiple files supported.
+      </div>
+      <input type="file" id="fileInput" name="datasets" multiple accept=".csv,.xlsx,.xls,.json,.parquet" style="display:none;">
+    </div>
+
+    <!-- Live File Preview List -->
+    <div class="file-preview-list" id="filePreviewList"></div>
+
+    <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" id="startAnalysisBtn" class="btn btn-primary" disabled>
+        <span>Start Analysis &rarr;</span>
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

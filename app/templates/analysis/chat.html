@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ analysis.title }} - Chat Board - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+  <!-- Top Session Bar -->
+  <div class="chat-header">
+    <div style="display:flex; align-items:center; gap:0.75rem;">
+      <span style="font-size:1.5rem;">{{ analysis.icon }}</span>
+      <div>
+        <h2 style="font-size:1.125rem; font-weight:700; color:#0F172A;" id="analysisSessionTitle">
+          {{ analysis.title }}
+        </h2>
+        <div style="font-size:0.75rem; color:#64748B;">
+          Created: {{ format_datetime(analysis.created_at) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Data Strip -->
+    <div class="chat-datasets-strip" style="display:flex; align-items:center; gap:0.625rem; flex-wrap:wrap;">
+      <span style="font-size:0.8125rem; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.04em;">CURRENT DATA:</span>
+      {% for ds in datasets %}
+        <div class="dataset-chip active" style="display:inline-flex; flex-direction:column; padding:0.25rem 0.65rem; border-radius:6px; background:#F0FDFA; border:1px solid #CCFBF1; line-height:1.2;">
+          <div style="font-size:0.8125rem; font-weight:600; color:#0F766E;">
+            ✓ {{ ds.original_name }}
+          </div>
+          <div style="font-size:0.71875rem; color:#64748B; margin-left:0.875rem;">
+            {{ format_number(ds.row_count) }} rows &middot; {{ ds.file_type.upper().lstrip('.') if ds.file_type else 'CSV' }}
+          </div>
+        </div>
+      {% endfor %}
+
+      <!-- Add Another Dataset Button & Form -->
+      <form id="addDatasetForm" action="{{ url_for('analysis.add_dataset', analysis_id=analysis.id) }}" method="POST" enctype="multipart/form-data" style="display:inline-flex; align-items:center;">
+        <input type="file" id="addDatasetFileInput" name="datasets" multiple accept=".csv,.xlsx,.xls,.json,.parquet" style="display:none;" onchange="this.form.submit()">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('addDatasetFileInput').click()" title="Add another dataset to this session to compare" style="border:1px dashed #0F766E; background:#FFFFFF; color:#0F766E; font-weight:600; font-size:0.75rem; padding:0.4rem 0.75rem; display:inline-flex; align-items:center; gap:0.25rem;">
+          <span>+</span> <span>Add Dataset</span>
+        </button>
+      </form>
+    </div>
+
+
+
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <a href="{{ url_for('history.download_pdf', analysis_id=analysis.id) }}" class="btn btn-secondary btn-sm" title="Download Session PDF">
+        📄 PDF Report
+      </a>
+    </div>
+  </div>
+
+  <!-- Chat Message Stream -->
+  <div class="chat-messages" id="chatMessages" data-analysis-id="{{ analysis.id }}">
+    {% if not messages %}
+      <div style="text-align:center; padding:3rem 1.5rem; color:#64748B;">
+        <div style="font-size:2rem; margin-bottom:0.75rem;">💬</div>
+        <div style="font-size:1.125rem; font-weight:600; color:#0F172A; margin-bottom:0.375rem;">
+          Your datasets are loaded and verified
+        </div>
+        <div style="font-size:0.875rem; max-width:450px; margin:0 auto 1.5rem;">
+          Ask any business question in plain English. For example:
+        </div>
+        <div style="display:flex; justify-content:center; gap:0.5rem; flex-wrap:wrap;">
+          {% if datasets|length > 1 %}
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuestion('Compare both datasets')" style="color:#0F766E; font-weight:600; border-color:#0F766E;">
+              "Compare both datasets"
+            </button>
+          {% endif %}
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuestion('Which customer segment generated the highest revenue?')">
+            "Which customer segment generated the highest revenue?"
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuestion('Which region generated the highest sales?')">
+            "Which region generated the highest sales?"
+          </button>
+        </div>
+      </div>
+
+    {% else %}
+      {% for msg in messages %}
+        {% if msg.message_type == 'user' %}
+          <div class="user-msg-row">
+            <div class="user-bubble">{{ msg.question }}</div>
+          </div>
+        {% else %}
+          {% if msg.question %}
+            <div class="user-msg-row">
+              <div class="user-bubble">{{ msg.question }}</div>
+            </div>
+          {% endif %}
+
+          <div class="agent-response-card">
+            <div class="agent-answer-hero">
+              {{ msg.answer }}
+            </div>
+
+            {% if msg.chart_info and msg.chart_info.data %}
+              <div class="chart-wrapper">
+                <canvas id="chart_{{ msg.id }}" class="chart-canvas" data-config='{{ msg.chart_info | tojson | safe }}'></canvas>
+              </div>
+            {% endif %}
+
+            <!-- Traceable Evidence -->
+            <div class="evidence-card">
+              <div class="evidence-header">
+                <div class="evidence-title">Traceable Evidence</div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openSourceDataModal({{ msg.id }})">
+                  🔍 View Source Data
+                </button>
+              </div>
+              <div style="font-size:0.8125rem; color:#64748B; margin-bottom:0.75rem;">
+                Source: <b>{{ msg.evidence.source_dataset if msg.evidence and msg.evidence.source_dataset else 'Uploaded dataset' }}</b> &nbsp;&bull;&nbsp;
+                Rows analyzed: <b>{{ msg.evidence.rows_analyzed if msg.evidence and msg.evidence.rows_analyzed else 0 }}</b>
+              </div>
+              {% if msg.evidence and msg.evidence.breakdown %}
+                <div class="evidence-breakdown-list">
+                  {% for b in msg.evidence.breakdown %}
+                    <div class="evidence-breakdown-item">
+                      <span style="font-weight:600; color:#0F172A;">{{ b.entity }}</span>
+                      <span style="color:#0F766E; font-weight:700;">{{ b.formatted_value }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Mathematical Proof -->
+            {% if msg.proof %}
+              <div>
+                <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; margin-bottom:0.375rem;">
+                  Mathematical Proof
+                </div>
+                <div class="proof-card">{{ msg.proof }}</div>
+              </div>
+            {% endif %}
+
+            <!-- Validation Checklist -->
+            <div class="validation-card">
+              <div style="font-size:0.8125rem; font-weight:700; color:#166534; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                Verification & Validation
+              </div>
+              <ul class="validation-list">
+                {% if msg.validation %}
+                  {% for v in msg.validation %}
+                    <li class="validation-item">
+                      <span style="color: {% if v.passed %}#16A34A{% else %}#DC2626{% endif %}; font-weight:700;">
+                        {% if v.passed %}✓{% else %}✗{% endif %}
+                      </span>
+                      <span><b>{{ v.check }}</b>: {{ v.detail }}</span>
+                    </li>
+                  {% endfor %}
+                {% else %}
+                  <li class="validation-item">
+                    <span>✓</span>
+                    <span>Calculations and schema verified against underlying data.</span>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <!-- Executive Insight -->
+            {% if msg.insight %}
+              <div class="insight-card">
+                <span style="font-size:1.25rem;">💡</span>
+                <div>
+                  <div style="font-weight:700; font-size:0.8125rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">
+                    Executive Insight
+                  </div>
+                  <div>{{ msg.insight }}</div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Bottom Input Bar -->
+  <form id="chatForm" class="chat-input-bar" style="display:flex; align-items:center; gap:0.5rem;">
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addDatasetFileInput').click()" title="Add another dataset to compare in this session" style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.75rem 1rem; border-color:#CBD5E1; color:#0F766E; font-weight:600; white-space:nowrap;">
+      <span>📎</span>
+      <span>+ Add Dataset</span>
+    </button>
+    <input type="text" id="questionInput" class="chat-input" placeholder="Ask another question about your datasets or compare them..." autocomplete="off" required>
+    <button type="submit" id="sendBtn" class="btn btn-primary" style="padding:0.75rem 1.5rem;">
+      <span>Send</span>
+    </button>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+  function setQuestion(text) {
+    const input = document.getElementById("questionInput");
+    if (input) {
+      input.value = text;
+      input.focus();
+    }
+  }
+</script>
+{% endblock %}

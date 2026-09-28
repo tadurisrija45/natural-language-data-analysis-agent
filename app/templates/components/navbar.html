@@ -1,0 +1,29 @@
+<header class="top-navbar">
+  <div class="brand-section">
+    <button class="mobile-nav-toggle" id="mobileToggle" aria-label="Toggle navigation">
+      ☰
+    </button>
+    <a href="{{ url_for('dashboard.dashboard') }}" style="display:flex; align-items:center; gap:0.75rem; text-decoration:none;">
+      <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="DataAgent" class="brand-logo">
+      <div>
+        <div class="brand-name">{{ BRAND_NAME }}</div>
+        <div class="brand-tagline">{{ BRAND_TAGLINE }}</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="nav-actions">
+    {% if current_user.is_authenticated %}
+      <div style="font-size:0.8125rem; color:#64748B; display:none; @media(min-width:768px){display:block;}">
+        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#16A34A; margin-right:4px;"></span>
+        Sandbox Ready
+      </div>
+      <div class="user-pill">
+        <div class="user-avatar-circle">
+          {{ current_user.display_name[0].upper() }}
+        </div>
+        <span>{{ current_user.display_name }}</span>
+      </div>
+    {% endif %}
+  </div>
+</header>

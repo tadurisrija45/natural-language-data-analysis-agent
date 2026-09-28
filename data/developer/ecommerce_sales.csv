@@ -1,0 +1,26 @@
+order_id,customer_id,customer_name,customer_segment,region,category,sub_category,sales,quantity,profit,discount,order_date
+ORD-1001,CUST-201,Alice Johnson,Corporate,South,Technology,Phones,95000,2,19000,0.05,2025-01-15
+ORD-1002,CUST-202,Bob Smith,Consumer,North,Furniture,Chairs,42000,4,6200,0.10,2025-01-18
+ORD-1003,CUST-203,Charlie Davis,Standard,South,Technology,Laptops,405000,3,81000,0.00,2025-01-20
+ORD-1004,CUST-204,Diana Prince,Corporate,West,Office Supplies,Storage,32000,5,4800,0.15,2025-02-01
+ORD-1005,CUST-205,Ethan Hunt,Standard,South,Technology,Accessories,495000,10,99000,0.05,2025-02-05
+ORD-1006,CUST-206,Fiona Gallagher,Consumer,North,Technology,Phones,180000,2,36000,0.00,2025-02-12
+ORD-1007,CUST-207,George Clark,Corporate,East,Furniture,Tables,88000,2,11000,0.20,2025-02-18
+ORD-1008,CUST-208,Hannah Abbott,Standard,West,Office Supplies,Binders,24000,8,3600,0.10,2025-02-22
+ORD-1009,CUST-209,Ian Malcolm,Consumer,North,Furniture,Bookcases,120000,3,18000,0.05,2025-03-01
+ORD-1010,CUST-210,Julia Roberts,Corporate,South,Furniture,Chairs,65000,2,9750,0.00,2025-03-05
+ORD-1011,CUST-211,Kevin Bacon,Standard,North,Technology,Laptops,380000,2,76000,0.00,2025-03-10
+ORD-1012,CUST-212,Laura Croft,Consumer,West,Technology,Accessories,75000,4,15000,0.05,2025-03-15
+ORD-1013,CUST-213,Michael Scott,Corporate,East,Office Supplies,Paper,15000,10,2250,0.00,2025-03-20
+ORD-1014,CUST-214,Nina Simone,Standard,East,Technology,Phones,210000,3,42000,0.05,2025-03-25
+ORD-1015,CUST-215,Oscar Martinez,Consumer,West,Furniture,Tables,95000,2,14250,0.10,2025-04-02
+ORD-1016,CUST-216,Pam Beesly,Corporate,North,Office Supplies,Art,18000,6,2700,0.00,2025-04-08
+ORD-1017,CUST-217,Quinn Fabray,Standard,West,Technology,Laptops,410000,2,82000,0.00,2025-04-14
+ORD-1018,CUST-218,Ryan Howard,Consumer,East,Office Supplies,Fasteners,8000,5,1200,0.00,2025-04-20
+ORD-1019,CUST-219,Sarah Connor,Corporate,West,Furniture,Chairs,55000,3,8250,0.05,2025-05-02
+ORD-1020,CUST-220,Tony Stark,Corporate,North,Technology,Phones,160000,2,32000,0.00,2025-05-10
+ORD-1021,CUST-201,Alice Johnson,Corporate,South,Office Supplies,Storage,45000,3,6750,0.05,2025-05-18
+ORD-1022,CUST-203,Charlie Davis,Standard,South,Furniture,Tables,95000,2,14250,0.10,2025-05-25
+ORD-1023,CUST-207,George Clark,Corporate,East,Technology,Laptops,340000,2,68000,0.00,2025-06-02
+ORD-1024,CUST-210,Julia Roberts,Corporate,South,Technology,Accessories,85000,5,17000,0.05,2025-06-15
+ORD-1025,CUST-214,Nina Simone,Standard,East,Furniture,Chairs,62000,3,9300,0.00,2025-06-22

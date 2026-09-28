@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="account-container">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size:1.75rem; font-weight:700; color:#0F172A;">Settings</h1>
+    <p style="color:#64748B; font-size:0.9375rem; margin-top:0.25rem;">
+      Configure your analysis preferences, storage allocation, and security parameters.
+    </p>
+  </div>
+
+  <!-- Account Section -->
+  <div class="account-section">
+    <div class="account-section-title">👤 Account</div>
+    <p style="font-size:0.875rem; color:#64748B; margin-bottom:1rem;">
+      Your profile is currently configured as <b>{{ user.full_name }}</b> (@{{ user.username }}).
+    </p>
+    <a href="{{ url_for('account.profile') }}" class="btn btn-secondary btn-sm">
+      Manage Profile & Password &rarr;
+    </a>
+  </div>
+
+  <!-- Analysis Preferences -->
+  <div class="account-section">
+    <div class="account-section-title">📊 Analysis Preferences</div>
+    <div style="display:flex; flex-direction:column; gap:1rem; font-size:0.875rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:600; color:#0F172A;">Auto Chart Generation</div>
+          <div style="color:#64748B;">Automatically recommend and render Chart.js visualizations for query outputs.</div>
+        </div>
+        <span class="badge badge-success">Enabled</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:1rem;">
+        <div>
+          <div style="font-weight:600; color:#0F172A;">Traceable Evidence Mode</div>
+          <div style="color:#64748B;">Require verified mathematical proof and source datasets on all business answers.</div>
+        </div>
+        <span class="badge badge-success">Strict (Active)</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:1rem;">
+        <div>
+          <div style="font-weight:600; color:#0F172A;">Self-Correction Limit</div>
+          <div style="color:#64748B;">Maximum iterative retries for automated syntax or algorithmic self-healing.</div>
+        </div>
+        <span class="badge badge-teal">3 Retries</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Storage Information -->
+  <div class="account-section">
+    <div class="account-section-title">💾 Storage Information</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Active Uploads</span>
+        <span class="info-value">{{ storage_stats.file_count }} files</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Storage Allocated</span>
+        <span class="info-value">{{ format_file_size(storage_stats.total_bytes) }}</span>
+      </div>
+    </div>
+    <div style="font-size:0.8125rem; color:#64748B; background:#F8FAFC; padding:0.75rem 1rem; border-radius:6px; border:1px solid #E2E8F0;">
+      All uploaded files are strictly isolated under your user identifier (<code>data/user_uploads/{{ user.id }}/</code>).
+    </div>
+  </div>
+
+  <!-- Security Settings -->
+  <div class="account-section">
+    <div class="account-section-title">🛡️ Security Settings</div>
+    <div style="display:flex; flex-direction:column; gap:1rem; font-size:0.875rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:600; color:#0F172A;">Code Execution Sandbox</div>
+          <div style="color:#64748B;">All Python code is verified via AST Security Gate and executed in isolated sandboxes.</div>
+        </div>
+        <span class="badge badge-success">Enforced</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:1rem;">
+        <div>
+          <div style="font-weight:600; color:#0F172A;">Network Access Restriction</div>
+          <div style="color:#64748B;">No outbound socket or HTTP network calls permitted inside the analysis sandbox.</div>
+        </div>
+        <span class="badge badge-success">Disabled (Zero Outbound)</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:1rem;">
+        <div>
+          <div style="font-weight:600; color:#0F172A;">Resource Timeout Limit</div>
+          <div style="color:#64748B;">Execution cutoff to avoid runaway loops or denial-of-service.</div>
+        </div>
+        <span class="badge badge-teal">15 Seconds</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+campaign_id,campaign_name,channel,target_audience,spend,impressions,clicks,conversions,revenue,start_date
+CMP-01,Summer Blast 2025,Google Ads,Tech Enthusiasts,120000,850000,42500,2100,580000,2025-05-01
+CMP-02,Back to College,Meta / Instagram,Students,85000,620000,31000,1450,390000,2025-06-01
+CMP-03,Enterprise Connect,LinkedIn,Corporate Decision Makers,190000,340000,13600,890,920000,2025-04-15
+CMP-04,Influencer Spotlight,YouTube,General Consumers,150000,1200000,48000,1850,540000,2025-05-15
+CMP-05,Email Retention Wave,Email,Existing Customers,35000,180000,19800,2400,680000,2025-03-01
+CMP-06,Search Dominance Q2,Google Ads,High-Intent Buyers,140000,720000,43200,2650,810000,2025-04-01
+CMP-07,Festive Pre-Launch,Meta / Facebook,Families,95000,910000,36400,1620,460000,2025-06-15
+CMP-08,Affiliate Catalyst,Affiliate Network,Bargain Hunters,60000,410000,24600,1750,420000,2025-05-20

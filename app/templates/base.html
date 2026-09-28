@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ BRAND_NAME }}{% endblock %} | {{ BRAND_TAGLINE }}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+  
+  <!-- Core Design System CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  {% block extra_css %}{% endblock %}
+
+  <!-- Chart.js Modern Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  {% if current_user.is_authenticated %}
+    {% include 'components/navbar.html' %}
+    <div class="app-layout">
+      {% include 'components/sidebar.html' %}
+      <main class="main-wrapper">
+        <div class="content-container">
+          {% include 'components/flash_messages.html' %}
+          {% block content %}{% endblock %}
+        </div>
+      </main>
+    </div>
+    {% include 'components/source_data_modal.html' %}
+  {% else %}
+    <main>
+      {% include 'components/flash_messages.html' %}
+      {% block auth_content %}{% endblock %}
+    </main>
+  {% endif %}
+
+  <!-- Core Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

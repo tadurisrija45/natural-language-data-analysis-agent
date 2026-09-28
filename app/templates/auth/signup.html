@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block auth_content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="{{ BRAND_NAME }}" class="auth-logo">
+      <div class="auth-brand">{{ BRAND_NAME }}</div>
+      <div class="auth-tagline">{{ BRAND_TAGLINE }}</div>
+      <div class="auth-heading">Create your account</div>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.signup') }}" id="signupForm">
+      <div class="form-group">
+        <label for="full_name" class="form-label">Full name</label>
+        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ full_name or '' }}" required autofocus placeholder="e.g. Srija Patel">
+      </div>
+
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" id="username" name="username" class="form-control" value="{{ username or '' }}" required placeholder="e.g. srijap">
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" id="email" name="email" class="form-control" value="{{ email or '' }}" required placeholder="name@company.com">
+      </div>
+
+      <div class="form-group">
+        <label for="mobile" class="form-label">Mobile number</label>
+        <input type="tel" id="mobile" name="mobile" class="form-control" value="{{ mobile or '' }}" required placeholder="+91 98765 43210">
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" name="password" class="form-control" required placeholder="Minimum 6 characters">
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password" class="form-label">Confirm password</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required placeholder="Repeat password">
+      </div>
+
+      <button type="submit" class="btn btn-primary auth-submit-btn">Create account</button>
+
+      <div class="auth-footer center">
+        <span>Already have an account?</span>
+        <a href="{{ url_for('auth.login') }}">Log in</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

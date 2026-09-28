@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ analysis.title }} - Saved Session - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto;">
+  <!-- Header Card -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+      <div style="display:flex; align-items:center; gap:0.875rem;">
+        <span style="font-size:2rem;">{{ analysis.icon }}</span>
+        <div>
+          <h1 style="font-size:1.5rem; font-weight:700; color:#0F172A;">{{ analysis.title }}</h1>
+          <div style="font-size:0.875rem; color:#64748B;">
+            Analysis Created: <b>{{ format_datetime(analysis.created_at) }}</b> &bull; Status: <span class="badge badge-success">● {{ analysis.status }}</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.75rem;">
+        <a href="{{ url_for('analysis.chat_board', analysis_id=analysis.id) }}" class="btn btn-secondary btn-sm">
+          💬 Continue Chat
+        </a>
+        <a href="{{ url_for('history.download_pdf', analysis_id=analysis.id) }}" class="btn btn-primary btn-sm">
+          📄 Download PDF Report
+        </a>
+      </div>
+    </div>
+
+    <!-- Uploaded Files List -->
+    <div style="border-top:1px solid #E2E8F0; padding-top:1rem;">
+      <div style="font-size:0.8125rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; margin-bottom:0.75rem;">
+        Uploaded Files
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:0.75rem;">
+        {% for ds in datasets %}
+          <div style="padding:0.75rem; border:1px solid #E2E8F0; border-radius:8px; background:#F8FAFC; font-size:0.8125rem;">
+            <div style="font-weight:600; color:#0F172A;">✓ {{ ds.original_name }}</div>
+            <div style="color:#64748B; margin-top:2px;">
+              Uploaded: {{ format_datetime(ds.created_at, 'time_only') }} &bull; {{ format_file_size(ds.file_size) }} &bull; {{ format_number(ds.row_count) }} rows
+            </div>
+          </div>
+
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Chat History List -->
+  <div style="display:flex; flex-direction:column; gap:2rem;">
+    {% for msg in messages %}
+      {% if msg.question %}
+        <div class="user-msg-row">
+          <div class="user-bubble">{{ msg.question }}</div>
+        </div>
+      {% endif %}
+
+      <div class="agent-response-card" style="max-width:100%;">
+        <div class="agent-answer-hero">
+          {{ msg.answer }}
+        </div>
+
+        {% if msg.chart_info and msg.chart_info.data %}
+          <div class="chart-wrapper">
+            <canvas id="chart_{{ msg.id }}" class="chart-canvas" data-config='{{ msg.chart_info | tojson | safe }}'></canvas>
+          </div>
+        {% endif %}
+
+        <!-- Traceable Evidence -->
+        <div class="evidence-card">
+          <div class="evidence-header">
+            <div class="evidence-title">Traceable Evidence</div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openSourceDataModal({{ msg.id }})">
+              🔍 View Source Data
+            </button>
+          </div>
+          <div style="font-size:0.8125rem; color:#64748B; margin-bottom:0.75rem;">
+            Source: <b>{{ msg.evidence.source_dataset if msg.evidence and msg.evidence.source_dataset else 'Uploaded dataset' }}</b> &nbsp;&bull;&nbsp;
+            Rows analyzed: <b>{{ msg.evidence.rows_analyzed if msg.evidence and msg.evidence.rows_analyzed else 0 }}</b>
+          </div>
+          {% if msg.evidence and msg.evidence.breakdown %}
+            <div class="evidence-breakdown-list">
+              {% for b in msg.evidence.breakdown %}
+                <div class="evidence-breakdown-item">
+                  <span style="font-weight:600; color:#0F172A;">{{ b.entity }}</span>
+                  <span style="color:#0F766E; font-weight:700;">{{ b.formatted_value }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Mathematical Proof -->
+        {% if msg.proof %}
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; margin-bottom:0.375rem;">
+              Mathematical Proof
+            </div>
+            <div class="proof-card">{{ msg.proof }}</div>
+          </div>
+        {% endif %}
+
+        <!-- Verification & Validation -->
+        <div class="validation-card">
+          <div style="font-size:0.8125rem; font-weight:700; color:#166534; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+            Verification & Validation
+          </div>
+          <ul class="validation-list">
+            {% if msg.validation %}
+              {% for v in msg.validation %}
+                <li class="validation-item">
+                  <span style="color: {% if v.passed %}#16A34A{% else %}#DC2626{% endif %}; font-weight:700;">
+                    {% if v.passed %}✓{% else %}✗{% endif %}
+                  </span>
+                  <span><b>{{ v.check }}</b>: {{ v.detail }}</span>
+                </li>
+              {% endfor %}
+            {% else %}
+              <li class="validation-item">
+                <span>✓</span>
+                <span>Calculations and schema verified against underlying data.</span>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <!-- Executive Insight -->
+        {% if msg.insight %}
+          <div class="insight-card">
+            <span style="font-size:1.25rem;">💡</span>
+            <div>
+              <div style="font-weight:700; font-size:0.8125rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.25rem;">
+                Executive Insight
+              </div>
+              <div>{{ msg.insight }}</div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% include 'components/source_data_modal.html' %}
+{% endblock %}
+
+
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

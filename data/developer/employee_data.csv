@@ -1,0 +1,16 @@
+employee_id,name,department,role,salary,experience_years,performance_rating,education,hire_date
+EMP-001,Aarav Sharma,Engineering,Senior Software Engineer,1450000,6,4.8,B.Tech,2021-03-15
+EMP-002,Bhavna Patel,Engineering,DevOps Lead,1600000,8,4.6,M.Tech,2019-07-01
+EMP-003,Chirag Reddy,Marketing,Growth Marketing Lead,1150000,5,4.3,MBA,2022-01-10
+EMP-004,Deepika Rao,Finance,Financial Analyst,950000,4,4.2,CA,2022-09-05
+EMP-005,Eshan Verma,Engineering,Backend Developer,1050000,3,4.5,B.Tech,2023-04-12
+EMP-006,Farah Khan,Human Resources,HR Business Partner,880000,4,4.1,MBA,2021-11-20
+EMP-007,Gautam Menon,Sales,Enterprise Sales Manager,1500000,7,4.7,BBA,2020-02-14
+EMP-008,Hema Sundaram,Marketing,Content Strategist,820000,3,4.0,BA,2023-06-18
+EMP-009,Ishaan Joshi,Sales,Account Executive,920000,3,4.4,B.Com,2022-10-01
+EMP-010,Jaya Nair,Engineering,Frontend Developer,980000,3,4.3,B.Tech,2023-01-23
+EMP-011,Karan Gupta,Finance,Senior Accountant,1120000,5,4.4,M.Com,2020-08-30
+EMP-012,Lavanya Iyer,Product,Product Manager,1750000,7,4.9,MBA,2020-05-15
+EMP-013,Manish Malhotra,Sales,Regional Sales Lead,1400000,6,4.5,MBA,2021-06-11
+EMP-014,Neha Kapoor,Human Resources,Talent Acquisition Lead,940000,4,4.2,MBA,2022-03-08
+EMP-015,Omkar Deshmukh,Engineering,Data Engineer,1350000,5,4.7,M.Tech,2021-10-15

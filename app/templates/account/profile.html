@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}My Account - {{ BRAND_NAME }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="account-container">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size:1.75rem; font-weight:700; color:#0F172A;">My Account</h1>
+    <p style="color:#64748B; font-size:0.9375rem; margin-top:0.25rem;">
+      Manage your personal account credentials and profile preferences.
+    </p>
+  </div>
+
+  <!-- Profile Details Card -->
+  <div class="account-section">
+    <div class="account-section-title">Account Details</div>
+    
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Full Name</span>
+        <span class="info-value">{{ user.full_name }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Username</span>
+        <span class="info-value">@{{ user.username }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Email Address</span>
+        <span class="info-value">{{ user.email }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Mobile Number</span>
+        <span class="info-value">{{ user.mobile or 'Not specified' }}</span>
+      </div>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <form method="POST" action="{{ url_for('account.profile') }}" style="border-top:1px solid #E2E8F0; padding-top:1.5rem;">
+      <input type="hidden" name="action" value="update_profile">
+      <div style="font-weight:600; font-size:1rem; margin-bottom:1rem; color:#0F172A;">Edit Profile</div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+        <div>
+          <label class="form-label">Full Name</label>
+          <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+        </div>
+        <div>
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" name="mobile" class="form-control" value="{{ user.mobile or '' }}" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+    </form>
+  </div>
+
+  <!-- Change Password Card -->
+  <div class="account-section">
+    <div class="account-section-title">Change Password</div>
+
+    <form method="POST" action="{{ url_for('account.profile') }}" id="changePasswordForm">
+      <input type="hidden" name="action" value="change_password">
+      <div class="form-group">
+        <label for="current_password" class="form-label">Current Password</label>
+        <input type="password" id="current_password" name="current_password" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label for="new_password" class="form-label">New Password</label>
+        <input type="password" id="new_password" name="new_password" class="form-control" required placeholder="Minimum 6 characters">
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password" class="form-label">Confirm New Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+      </div>
+
+      <button type="submit" class="btn btn-secondary">Update Password</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/account.js') }}"></script>
+{% endblock %}

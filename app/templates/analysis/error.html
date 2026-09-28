@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Notice - {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 4rem auto; text-align: center;">
+  <div class="card" style="padding: 3rem 2rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+    <h1 style="font-size: 1.5rem; font-weight: 700; color: #0F172A; margin-bottom: 0.5rem;">
+      {{ error_code or 'Notice' }}
+    </h1>
+    <p style="color: #64748B; font-size: 1rem; margin-bottom: 2rem;">
+      {{ message or 'We could not complete your request. Please try again or return to the dashboard.' }}
+    </p>
+    <div style="display:flex; justify-content:center; gap:1rem;">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary">
+        Return to Dashboard
+      </a>
+      <a href="{{ url_for('analysis.new_analysis') }}" class="btn btn-secondary">
+        Start New Analysis
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
