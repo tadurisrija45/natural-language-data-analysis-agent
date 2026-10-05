@@ -181,19 +181,45 @@ class PDFReportGenerator:
             insight_text = msg.insight or ""
             chart_info = msg.chart_info if isinstance(msg.chart_info, dict) else {}
 
-            question_block = []
+            mode_label = (msg.mode or "Natural Language").replace("_", " ").title()
+
             # Question Header Card
-            question_block.append(Paragraph(f"<b>Question {q_idx}: {q_text}</b>", ParagraphStyle("QHead", parent=h2_style, fontSize=12, textColor=primary_teal)))
-            question_block.append(Paragraph(f"<b>Answer:</b> {ans_text}", ParagraphStyle("Ans", parent=body_style, fontSize=11, fontName="Helvetica-Bold", textColor=slate_dark)))
-            question_block.append(Spacer(1, 6))
+            story.append(Paragraph(
+                f"<b>Question {q_idx} [{mode_label}]: {q_text}</b>",
+                ParagraphStyle("QHead", parent=h2_style, fontSize=12, textColor=primary_teal)
+            ))
+            story.append(Paragraph(f"<b>Answer:</b> {ans_text}", ParagraphStyle("Ans", parent=body_style, fontSize=11, fontName="Helvetica-Bold", textColor=slate_dark)))
+            story.append(Spacer(1, 6))
+
+            # Only show code block for SQL or Python modes (not internal NL pipeline code)
+            if msg.mode in ["sql", "python"]:
+                raw_snippet = (msg.raw_code or q_text or "").strip()
+                lines = raw_snippet.splitlines()
+                if len(lines) > 18:
+                    raw_snippet = "\n".join(lines[:18]) + f"\n... [{len(lines) - 18} more lines]"
+                code_snippet = raw_snippet.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br/>")
+
+                code_table = Table([[
+                    Paragraph(f"<b>Executed {mode_label}:</b><br/><font face='Courier' size=8 color='#0F172A'>{code_snippet}</font>", body_style)
+                ]], colWidths=[530])
+                code_table.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, -1), bg_light),
+                    ("BOX", (0, 0), (-1, -1), 0.5, border_color),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ]))
+                story.append(code_table)
+                story.append(Spacer(1, 6))
 
             # Embed Chart if static image exists
             static_chart_path = chart_info.get("static_image_path")
             if static_chart_path and os.path.exists(static_chart_path):
                 try:
                     img = Image(static_chart_path, width=5.5 * inch, height=2.6 * inch)
-                    question_block.append(img)
-                    question_block.append(Spacer(1, 8))
+                    story.append(img)
+                    story.append(Spacer(1, 8))
                 except Exception:
                     pass
 
@@ -216,12 +242,26 @@ class PDFReportGenerator:
 
             val_str = "<br/>".join(validation_items) if validation_items else "✓ Calculations and schema verified."
 
+            clean_proof_lines = (proof_text or "").splitlines()
+            if len(clean_proof_lines) > 16:
+                clean_proof_text = "\n".join(clean_proof_lines[:16]) + f"\n... [{len(clean_proof_lines) - 16} more lines]"
+            else:
+                clean_proof_text = proof_text or ""
+            clean_proof = clean_proof_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br/>")
+
             details_data = [
                 [Paragraph("<b>Traceable Evidence</b>", body_bold), Paragraph(evidence_content, body_style)],
-                [Paragraph("<b>Mathematical Proof</b>", body_bold), Paragraph(proof_text.replace("\n", "<br/>"), body_style)],
+                [Paragraph("<b>Proof & Traceability</b>", body_bold), Paragraph(clean_proof, body_style)],
                 [Paragraph("<b>Validation Checklist</b>", body_bold), Paragraph(val_str, body_style)],
                 [Paragraph("<b>Executive Insight</b>", body_bold), Paragraph(insight_text, ParagraphStyle("Insight", parent=body_style, fontName="Helvetica-Oblique"))],
             ]
+
+            if msg.suggested_questions:
+                sug_lines = "<br/>".join([f"• {sq}" for sq in msg.suggested_questions[:4]])
+                details_data.append([
+                    Paragraph("<b>Suggested Follow-Ups</b>", body_bold),
+                    Paragraph(sug_lines, ParagraphStyle("Suggestions", parent=body_style, textColor=dark_teal))
+                ])
 
             card_table = Table(details_data, colWidths=[130, 400])
             card_table.setStyle(TableStyle([
@@ -232,11 +272,9 @@ class PDFReportGenerator:
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
             ]))
 
-            question_block.append(card_table)
-            question_block.append(Spacer(1, 16))
-            question_block.append(HRFlowable(width="100%", thickness=0.5, color=border_color, spaceAfter=14))
-
-            story.append(KeepTogether(question_block))
+            story.append(card_table)
+            story.append(Spacer(1, 14))
+            story.append(HRFlowable(width="100%", thickness=0.5, color=border_color, spaceAfter=14))
             q_idx += 1
 
         # Build document

@@ -54,7 +54,14 @@
     {% for msg in messages %}
       {% if msg.question %}
         <div class="user-msg-row">
-          <div class="user-bubble">{{ msg.question }}</div>
+          <div class="user-bubble">
+            {% if msg.mode and msg.mode != 'natural_language' %}
+              <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">
+                ⚡ {{ msg.mode }} MODE
+              </div>
+            {% endif %}
+            {{ msg.question }}
+          </div>
         </div>
       {% endif %}
 
@@ -136,6 +143,23 @@
                 Executive Insight
               </div>
               <div>{{ msg.insight }}</div>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Suggested Follow-Up Questions -->
+        {% if msg.suggested_questions %}
+          <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px dashed #E2E8F0;">
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#0F766E; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.35rem;">
+              <span>✨</span>
+              <span>Suggested Follow-Up Analyses</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+              {% for sq in msg.suggested_questions %}
+                <div style="font-size:0.8125rem; color:#475569; padding:0.25rem 0.5rem; background:#F8FAFC; border-radius:6px; border:1px solid #E2E8F0;">
+                  💡 {{ sq }}
+                </div>
+              {% endfor %}
             </div>
           </div>
         {% endif %}

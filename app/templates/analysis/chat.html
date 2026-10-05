@@ -84,12 +84,26 @@
       {% for msg in messages %}
         {% if msg.message_type == 'user' %}
           <div class="user-msg-row">
-            <div class="user-bubble">{{ msg.question }}</div>
+            <div class="user-bubble">
+              {% if msg.mode and msg.mode != 'natural_language' %}
+                <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">
+                  ⚡ {{ msg.mode }} MODE
+                </div>
+              {% endif %}
+              <div style="{% if msg.mode in ['sql', 'python'] %}font-family:Consolas, monospace; white-space:pre-wrap; font-size:0.875rem;{% endif %}">{{ msg.question }}</div>
+            </div>
           </div>
         {% else %}
           {% if msg.question %}
             <div class="user-msg-row">
-              <div class="user-bubble">{{ msg.question }}</div>
+              <div class="user-bubble">
+                {% if msg.mode and msg.mode != 'natural_language' %}
+                  <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">
+                    ⚡ {{ msg.mode }} MODE
+                  </div>
+                {% endif %}
+                <div style="{% if msg.mode in ['sql', 'python'] %}font-family:Consolas, monospace; white-space:pre-wrap; font-size:0.875rem;{% endif %}">{{ msg.question }}</div>
+              </div>
             </div>
           {% endif %}
 
@@ -132,9 +146,9 @@
             {% if msg.proof %}
               <div>
                 <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; margin-bottom:0.375rem;">
-                  Mathematical Proof
+                  Mathematical Proof & Traceability
                 </div>
-                <div class="proof-card">{{ msg.proof }}</div>
+                <div class="proof-card" style="white-space:pre-wrap; font-family:Consolas, monospace; font-size:0.8125rem;">{{ msg.proof }}</div>
               </div>
             {% endif %}
 
@@ -174,23 +188,74 @@
                 </div>
               </div>
             {% endif %}
+
+            <!-- Suggested Next Questions -->
+            {% if msg.suggested_questions %}
+              <div class="suggested-questions-container" style="margin-top:1.25rem; padding-top:1rem; border-top:1px dashed #CBD5E1;">
+                <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#0F766E; margin-bottom:0.625rem; display:flex; align-items:center; gap:0.35rem;">
+                  <span>✨</span>
+                  <span>AI Follow-Up Suggestions (Click to Analyze)</span>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                  {% for sq in msg.suggested_questions %}
+                    <button type="button" class="suggestion-pill-btn" onclick="submitSuggestedQuestion('{{ sq | replace("'", "\\'") }}')">
+                      <span>💡</span> {{ sq }}
+                    </button>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
           </div>
         {% endif %}
       {% endfor %}
     {% endif %}
   </div>
 
-  <!-- Bottom Input Bar -->
-  <form id="chatForm" class="chat-input-bar" style="display:flex; align-items:center; gap:0.5rem;">
-    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addDatasetFileInput').click()" title="Add another dataset to compare in this session" style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.75rem 1rem; border-color:#CBD5E1; color:#0F766E; font-weight:600; white-space:nowrap;">
-      <span>📎</span>
-      <span>+ Add Dataset</span>
-    </button>
-    <input type="text" id="questionInput" class="chat-input" placeholder="Ask another question about your datasets or compare them..." autocomplete="off" required>
-    <button type="submit" id="sendBtn" class="btn btn-primary" style="padding:0.75rem 1.5rem;">
-      <span>Send</span>
-    </button>
-  </form>
+  <!-- Multi-Mode Analysis Bar -->
+  <div style="display:flex; flex-direction:column; gap:0;">
+    <!-- Mode Selector Controls -->
+    <div class="mode-selector-wrapper" style="background:#F8FAFC; border:1px solid #CBD5E1; border-bottom:none; border-radius:12px 12px 0 0; padding:0.625rem 1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+      <div style="display:flex; align-items:center; gap:0.625rem;">
+        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#475569;">Mode:</span>
+        <div class="btn-group" role="group" aria-label="Analysis Mode" style="background:#E2E8F0; padding:3px; border-radius:8px; display:inline-flex;">
+          <button type="button" class="btn btn-sm mode-btn active" id="modeBtnNL" onclick="switchMode('natural_language')">
+            💬 Natural Language
+          </button>
+          <button type="button" class="btn btn-sm mode-btn" id="modeBtnSQL" onclick="switchMode('sql')">
+            ⚡ SQL
+          </button>
+          <button type="button" class="btn btn-sm mode-btn" id="modeBtnPython" onclick="switchMode('python')">
+            🐍 Python
+          </button>
+        </div>
+      </div>
+      <div id="modeHintText" style="font-size:0.75rem; color:#0F766E; font-weight:600;">
+        Plain English business questions &bull; Automatic AI pipeline
+      </div>
+    </div>
+
+    <!-- Available Datasets Helper Badge Row -->
+    <div id="datasetHelperRow" style="background:#F1F5F9; border-left:1px solid #CBD5E1; border-right:1px solid #CBD5E1; padding:0.35rem 1rem; font-size:0.75rem; color:#475569; display:none; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+      <span style="font-weight:600;">Active Tables:</span>
+      {% for ds in analysis.datasets %}
+        <span class="badge" style="background:#0F766E; color:#FFFFFF; font-family:Consolas, monospace; font-size:0.7rem; cursor:pointer;" onclick="insertTableSnippet('{{ ds.original_name.split('.')[0] }}')" title="Click to insert table name">
+          {{ ds.original_name.split('.')[0] }}
+        </span>
+      {% endfor %}
+    </div>
+
+    <!-- Bottom Input Form -->
+    <form id="chatForm" class="chat-input-bar" style="border-radius:0 0 12px 12px; margin-top:0; display:flex; align-items:flex-end; gap:0.5rem;">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('addDatasetFileInput').click()" title="Add another dataset to compare in this session" style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.75rem 1rem; border-color:#CBD5E1; color:#0F766E; font-weight:600; white-space:nowrap; height:46px;">
+        <span>📎</span>
+        <span>+ Add Dataset</span>
+      </button>
+      <textarea id="questionInput" class="chat-input" rows="1" placeholder="Ask a business question in plain English (e.g. Which region generated the highest revenue?)..." autocomplete="off" required style="resize:vertical; min-height:46px; max-height:220px; font-family:inherit; padding:0.75rem 1rem; line-height:1.4;"></textarea>
+      <button type="submit" id="sendBtn" class="btn btn-primary" style="padding:0.75rem 1.5rem; height:46px; display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;">
+        <span>Send</span>
+      </button>
+    </form>
+  </div>
 
 </div>
 {% endblock %}

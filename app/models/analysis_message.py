@@ -14,6 +14,8 @@ class AnalysisMessage(db.Model):
     analysis_type = db.Column(db.String(100), nullable=True)   # e.g., "Regional revenue comparison", "Ranking"
     _selected_datasets = db.Column("selected_datasets", db.String(255), nullable=True)
     _selected_columns = db.Column("selected_columns", db.String(255), nullable=True)
+    mode = db.Column(db.String(50), default="natural_language")  # 'natural_language', 'sql', 'python'
+    _suggested_questions = db.Column("suggested_questions", db.Text, nullable=True)
     status = db.Column(db.String(50), default="completed")     # completed, error, pending
 
     
@@ -169,13 +171,32 @@ class AnalysisMessage(db.Model):
         else:
             self._selected_columns = str(val) if val else None
 
-    def to_dict(self):
+    @property
+    def suggested_questions(self):
+        if not self._suggested_questions:
+            return []
+        try:
+            res = json.loads(self._suggested_questions)
+            return res if isinstance(res, list) else []
+        except Exception:
+            return []
 
+    @suggested_questions.setter
+    def suggested_questions(self, val):
+        if isinstance(val, list):
+            self._suggested_questions = json.dumps(val)
+        elif isinstance(val, str):
+            self._suggested_questions = val
+        else:
+            self._suggested_questions = None
+
+    def to_dict(self):
         """Serialize for frontend AJAX delivery."""
         return {
             "id": self.id,
             "analysis_id": self.analysis_id,
             "message_type": self.message_type,
+            "mode": self.mode or "natural_language",
             "question": self.question,
             "answer": self.answer,
             "analysis_type": self.analysis_type,
@@ -188,6 +209,8 @@ class AnalysisMessage(db.Model):
             "insight": self.insight,
             "chart_info": self.chart_info,
             "source_data": self.source_data,
+            "suggested_questions": self.suggested_questions,
+            "raw_code": self.raw_code,
             "created_at": self.created_at.strftime("%I:%M %p") if self.created_at else "",
         }
 

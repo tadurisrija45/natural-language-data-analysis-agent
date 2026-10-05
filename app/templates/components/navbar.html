@@ -24,6 +24,10 @@
         </div>
         <span>{{ current_user.display_name }}</span>
       </div>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.35rem 0.75rem; font-size:0.8125rem; color:#DC2626; border-color:#FECACA; background:#FEF2F2;" title="Sign out of your account">
+        <span>🚪</span>
+        <span>Logout</span>
+      </a>
     {% endif %}
   </div>
 </header>

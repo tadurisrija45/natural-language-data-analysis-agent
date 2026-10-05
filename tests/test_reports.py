@@ -65,6 +65,41 @@ class TestReports(unittest.TestCase):
         self.assertGreater(report.file_size, 0)
         self.assertTrue(report.filename.endswith(".pdf"))
 
+    def test_pdf_report_with_multi_mode_and_long_content(self):
+        # 1. Add SQL message
+        msg_sql = AnalysisMessage(
+            analysis_id=self.analysis.id,
+            user_id=self.user.id,
+            mode="sql",
+            question="SELECT region, SUM(sales) FROM sales GROUP BY region",
+            answer="SQL Query completed.",
+            raw_code="SELECT region, SUM(sales) FROM sales GROUP BY region ORDER BY sales DESC",
+            proof="Executed Read-Only SQL Query:\nSELECT region, SUM(sales) FROM sales GROUP BY region",
+            insight="South is top region."
+        )
+        msg_sql.suggested_questions = ["What is the trend over time?", "What are the top 5 products?"]
+
+        # 2. Add Python message with long code and proof
+        long_python_code = "\n".join([f"# Step {i}: computing stats\nx_{i} = {i} * 10" for i in range(50)])
+        msg_py = AnalysisMessage(
+            analysis_id=self.analysis.id,
+            user_id=self.user.id,
+            mode="python",
+            question="df = pd.read_csv('sales.csv')",
+            answer="Python analysis computed: 900,000.",
+            raw_code=long_python_code,
+            proof=long_python_code,
+            insight="Python computation verified in sandbox."
+        )
+
+        db.session.add_all([msg_sql, msg_py])
+        db.session.commit()
+
+        from app.reports.pdf_generator import PDFReportGenerator
+        pdf_path = PDFReportGenerator.generate_session_report(self.analysis, self.user)
+        self.assertTrue(os.path.exists(pdf_path))
+        self.assertGreater(os.path.getsize(pdf_path), 0)
+
 if __name__ == "__main__":
     unittest.main()
 

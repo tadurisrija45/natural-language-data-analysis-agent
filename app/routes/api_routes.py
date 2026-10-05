@@ -4,6 +4,9 @@ from flask_login import login_required, current_user
 from ..extensions.database import db
 from ..models import Analysis, Dataset, AnalysisMessage
 from ..analysis.analysis_pipeline import AnalysisPipeline
+from ..analysis.sql_executor import SQLExecutor
+from ..analysis.python_executor import PythonExecutor
+from ..agents.suggestion_generator import SuggestionGenerator
 from ..services.title_generator import TitleGenerator
 from ..utils.logger import get_logger
 
@@ -15,20 +18,36 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 @login_required
 def ask_question(analysis_id):
     """
-    AJAX endpoint for submitting a business question in an active analysis session.
-    Hidden AI pipeline runs: Analyzer -> Planner -> CodeGen -> Sandbox -> Validator -> Evidence -> Insight.
+    AJAX endpoint for submitting a question, SQL query, or Python code in an active analysis session.
+    Supports 3 modes:
+      - 'natural_language': Full agentic pipeline (Analyzer -> Planner -> CodeGen -> Sandbox -> Validator -> Insight)
+      - 'sql': Direct read-only SQL query execution with automatic Chart & Insight generation
+      - 'python': Sandbox execution of user-supplied Python analysis code
+    Also generates 3-4 context-aware next-question suggestions.
     """
     analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
     if not analysis:
         return jsonify({"success": False, "error": "Analysis session not found or unauthorized."}), 404
 
     data = request.get_json() or {}
-    question = data.get("question", "").strip()
+    mode = (data.get("mode") or "natural_language").strip().lower()
 
-    if not question:
-        return jsonify({"success": False, "error": "Please enter a business question."}), 400
+    # Extract input according to mode
+    if mode == "sql":
+        input_text = (data.get("query") or data.get("question") or data.get("code") or "").strip()
+        if not input_text:
+            return jsonify({"success": False, "error": "Please enter a SQL query."}), 400
+    elif mode == "python":
+        input_text = (data.get("code") or data.get("question") or "").strip()
+        if not input_text:
+            return jsonify({"success": False, "error": "Please enter Python code."}), 400
+    else:
+        mode = "natural_language"
+        input_text = (data.get("question") or "").strip()
+        if not input_text:
+            return jsonify({"success": False, "error": "Please enter a business question."}), 400
 
-    # Build dataset maps for pipeline
+    # Build dataset maps for executors
     datasets_meta = {}
     data_files = {}
 
@@ -36,26 +55,60 @@ def ask_question(analysis_id):
         datasets_meta[ds.original_name] = ds.profile_data
         data_files[ds.original_name] = ds.file_path
 
-    # Execute pipeline
-    pipeline_result = AnalysisPipeline.execute_pipeline(
-        question=question,
-        datasets_meta=datasets_meta,
-        data_files=data_files,
-        user_id=current_user.id
-    )
+    # Route execution based on selected mode
+    if mode == "sql":
+        pipeline_result = SQLExecutor.execute_sql(
+            query=input_text,
+            data_files=data_files,
+            datasets_meta=datasets_meta,
+            user_id=current_user.id
+        )
+    elif mode == "python":
+        pipeline_result = PythonExecutor.execute_python(
+            code=input_text,
+            data_files=data_files,
+            datasets_meta=datasets_meta,
+            user_id=current_user.id
+        )
+    else:
+        pipeline_result = AnalysisPipeline.execute_pipeline(
+            question=input_text,
+            datasets_meta=datasets_meta,
+            data_files=data_files,
+            user_id=current_user.id
+        )
+
+    # Gather session question history for suggestion deduplication
+    session_history = [m.question for m in analysis.messages if m.question]
+
+    # Generate 3-4 next-question suggestions
+    suggested_questions = []
+    if pipeline_result.get("success", False):
+        try:
+            suggested_questions = SuggestionGenerator.generate_suggestions(
+                current_input=input_text,
+                current_result=pipeline_result,
+                datasets_meta=datasets_meta,
+                session_history=session_history,
+                mode=mode
+            )
+        except Exception as ex:
+            logger.warning(f"Error generating follow-up suggestions: {ex}")
+            suggested_questions = []
 
     # Persist message in database
     message = AnalysisMessage(
         analysis_id=analysis.id,
         user_id=current_user.id,
         message_type="agent",
-        question=question,
+        mode=mode,
+        question=input_text,
         answer=pipeline_result.get("answer"),
         analysis_type=pipeline_result.get("analysis_type"),
         status=pipeline_result.get("status", "completed"),
         proof=pipeline_result.get("proof"),
         insight=pipeline_result.get("insight"),
-        raw_code=pipeline_result.get("raw_code")
+        raw_code=pipeline_result.get("raw_code") or input_text
     )
     message.evidence = pipeline_result.get("evidence", {})
     message.validation = pipeline_result.get("validation", [])
@@ -63,6 +116,7 @@ def ask_question(analysis_id):
     message.source_data = pipeline_result.get("source_data", [])
     message.selected_datasets = pipeline_result.get("selected_datasets", [])
     message.selected_columns = pipeline_result.get("selected_columns", [])
+    message.suggested_questions = suggested_questions
 
     try:
         db.session.add(message)
@@ -70,7 +124,7 @@ def ask_question(analysis_id):
         # Update session title if this is the first question
         if analysis.question_count <= 1:
             ds_names = [d.original_name for d in analysis.datasets]
-            new_title, new_cat, new_icon = TitleGenerator.generate_title_and_category(ds_names, question)
+            new_title, new_cat, new_icon = TitleGenerator.generate_title_and_category(ds_names, input_text)
             analysis.title = new_title
             analysis.category = new_cat
             analysis.icon = new_icon

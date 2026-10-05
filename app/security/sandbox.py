@@ -20,13 +20,15 @@ class SandboxExecutionResult:
         result_data: Any = None,
         error: Optional[str] = None,
         execution_time: float = 0.0,
-        mode: str = "subprocess"
+        mode: str = "subprocess",
+        stdout: str = ""
     ):
         self.success = success
         self.result_data = result_data
         self.error = error
         self.execution_time = execution_time
         self.mode = mode
+        self.stdout = stdout
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -35,6 +37,7 @@ class SandboxExecutionResult:
             "error": self.error,
             "execution_time": self.execution_time,
             "mode": self.mode,
+            "stdout": self.stdout,
         }
 
 
@@ -146,17 +149,24 @@ class ExecutionSandbox:
 
             try:
                 # Find JSON block in stdout
-                res_json = json.loads(stdout.strip())
+                raw_out = stdout.strip()
+                if "__SANDBOX_RESULT_START__" in raw_out and "__SANDBOX_RESULT_END__" in raw_out:
+                    json_str = raw_out.split("__SANDBOX_RESULT_START__")[1].split("__SANDBOX_RESULT_END__")[0].strip()
+                    res_json = json.loads(json_str)
+                else:
+                    res_json = json.loads(raw_out)
                 success = res_json.get("success", False)
                 result_data = res_json.get("result_data")
                 error = res_json.get("error")
+                out_logs = res_json.get("stdout", "")
                 log_sandbox_result(success, elapsed, error)
                 return SandboxExecutionResult(
                     success=success,
                     result_data=result_data,
                     error=error,
                     execution_time=elapsed,
-                    mode="subprocess"
+                    mode="subprocess",
+                    stdout=out_logs
                 )
             except json.JSONDecodeError:
                 err_msg = f"Invalid sandbox output: {stdout[:200]}"

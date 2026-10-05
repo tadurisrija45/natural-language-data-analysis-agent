@@ -5,6 +5,85 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendBtn = document.getElementById("sendBtn");
   const analysisId = chatMessages?.dataset?.analysisId;
 
+  let currentMode = "natural_language";
+
+  // Mode Switch Handler
+  window.switchMode = function(mode) {
+    currentMode = mode;
+    const btnNL = document.getElementById("modeBtnNL");
+    const btnSQL = document.getElementById("modeBtnSQL");
+    const btnPy = document.getElementById("modeBtnPython");
+    const hintElem = document.getElementById("modeHintText");
+    const helperRow = document.getElementById("datasetHelperRow");
+
+    if (btnNL) btnNL.classList.toggle("active", mode === "natural_language");
+    if (btnSQL) btnSQL.classList.toggle("active", mode === "sql");
+    if (btnPy) btnPy.classList.toggle("active", mode === "python");
+
+    if (!questionInput) return;
+
+    if (mode === "sql") {
+      questionInput.placeholder = "Enter SQL query (e.g. SELECT category, SUM(total_amount) AS revenue FROM orders GROUP BY category ORDER BY revenue DESC LIMIT 10)...";
+      questionInput.rows = 3;
+      questionInput.style.fontFamily = "Consolas, monospace";
+      if (hintElem) hintElem.innerHTML = "Read-Only SQL &bull; Supports <code>JOIN</code>, <code>GROUP BY</code>, aggregations";
+      if (helperRow) helperRow.style.display = "flex";
+    } else if (mode === "python") {
+      questionInput.placeholder = "Enter Python analysis code (e.g. result = orders.groupby('category')['total_amount'].sum().reset_index())...";
+      questionInput.rows = 4;
+      questionInput.style.fontFamily = "Consolas, monospace";
+      if (hintElem) hintElem.innerHTML = "Secure Sandbox &bull; Pre-loaded <code>datasets['name']</code> &amp; DataFrames";
+      if (helperRow) helperRow.style.display = "flex";
+    } else {
+      questionInput.placeholder = "Ask a business question in plain English (e.g. Which region generated the highest revenue?)...";
+      questionInput.rows = 1;
+      questionInput.style.fontFamily = "inherit";
+      if (hintElem) hintElem.innerHTML = "Plain English business questions &bull; Automatic AI pipeline";
+      if (helperRow) helperRow.style.display = "none";
+    }
+    questionInput.focus();
+  };
+
+  // Insert Table Snippet into input
+  window.insertTableSnippet = function(tableName) {
+    if (!questionInput) return;
+    const start = questionInput.selectionStart;
+    const end = questionInput.selectionEnd;
+    const text = questionInput.value;
+    const snippet = currentMode === "python" ? `datasets['${tableName}']` : tableName;
+    questionInput.value = text.substring(0, start) + snippet + text.substring(end);
+    questionInput.selectionStart = questionInput.selectionEnd = start + snippet.length;
+    questionInput.focus();
+  };
+
+  // Submit Suggested Question
+  window.submitSuggestedQuestion = function(text) {
+    if (window.switchMode) {
+      window.switchMode("natural_language");
+    }
+    if (questionInput) {
+      questionInput.value = text;
+      if (chatForm) {
+        chatForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+      }
+    }
+  };
+
+  // Keydown handling: Enter submits single-line, Ctrl+Enter submits multi-line
+  if (questionInput) {
+    questionInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        if (currentMode === "natural_language" && !e.shiftKey) {
+          e.preventDefault();
+          chatForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+        } else if ((currentMode === "sql" || currentMode === "python") && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          chatForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+        }
+      }
+    });
+  }
+
   // Initialize existing saved charts on page load
   document.querySelectorAll(".chart-canvas").forEach((canvas) => {
     const rawConfig = canvas.dataset.config;
@@ -24,25 +103,34 @@ document.addEventListener("DOMContentLoaded", () => {
   if (chatForm) {
     chatForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const question = questionInput.value.trim();
-      if (!question) return;
+      const inputText = questionInput.value.trim();
+      if (!inputText) return;
+
+      const submissionMode = currentMode;
 
       // 1. Optimistic User Bubble
-      appendUserBubble(question);
+      appendUserBubble(inputText, submissionMode);
       questionInput.value = "";
       questionInput.disabled = true;
       sendBtn.disabled = true;
       sendBtn.innerHTML = `<span>Analyzing...</span>`;
 
       // 2. Loading Placeholder
-      const loadingId = appendLoadingIndicator();
+      const loadingId = appendLoadingIndicator(submissionMode);
       scrollToBottom();
 
       try {
+        const payload = {
+          mode: submissionMode,
+          question: inputText,
+          query: inputText,
+          code: inputText
+        };
+
         const response = await fetch(`/api/analysis/${analysisId}/ask`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question })
+          body: JSON.stringify(payload)
         });
 
         const data = await response.json();
@@ -56,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (titleElem) titleElem.textContent = `${data.analysis_icon || "📊"} ${data.analysis_title}`;
           }
         } else {
-          appendErrorCard(data.error || "An error occurred while analyzing the question.");
+          appendErrorCard(data.error || "An error occurred while executing analysis.");
         }
       } catch (err) {
         removeLoadingIndicator(loadingId);
@@ -77,22 +165,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function appendUserBubble(text) {
+  function appendUserBubble(text, mode) {
     const row = document.createElement("div");
     row.className = "user-msg-row";
-    row.innerHTML = `<div class="user-bubble">${escapeHtml(text)}</div>`;
+    const isCode = mode === "sql" || mode === "python";
+    const modeBadge = mode && mode !== "natural_language" 
+      ? `<div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">⚡ ${escapeHtml(mode.toUpperCase())} MODE</div>` 
+      : "";
+    const contentStyle = isCode ? 'font-family:Consolas, monospace; white-space:pre-wrap; font-size:0.875rem;' : '';
+    
+    row.innerHTML = `
+      <div class="user-bubble">
+        ${modeBadge}
+        <div style="${contentStyle}">${escapeHtml(text)}</div>
+      </div>
+    `;
     chatMessages.appendChild(row);
   }
 
-  function appendLoadingIndicator() {
+  function appendLoadingIndicator(mode) {
     const id = "loading_" + Date.now();
     const card = document.createElement("div");
     card.id = id;
     card.className = "agent-response-card";
+    const label = mode === "sql" 
+      ? "Executing read-only SQL query across datasets..." 
+      : (mode === "python" ? "Running Python script in secure sandbox..." : "Executing verified agentic analysis on dataset...");
+      
     card.innerHTML = `
       <div style="display:flex; align-items:center; gap:0.75rem; color:#0F766E;">
         <div style="width:16px; height:16px; border:2px solid #0F766E; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <span style="font-size:0.9375rem; font-weight:500;">Executing verified analysis on dataset...</span>
+        <span style="font-size:0.9375rem; font-weight:500;">${label}</span>
       </div>
       <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
     `;
@@ -110,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
     card.className = "agent-response-card";
     card.innerHTML = `
       <div style="color:#DC2626; font-weight:600; font-size:1rem;">⚠️ Analysis Notice</div>
-      <div style="color:#64748B; font-size:0.875rem;">${escapeHtml(errText)}</div>
+      <div style="color:#64748B; font-size:0.875rem; margin-top:0.25rem;">${escapeHtml(errText)}</div>
     `;
     chatMessages.appendChild(card);
   }
@@ -140,6 +243,27 @@ document.addEventListener("DOMContentLoaded", () => {
           <span><b>${escapeHtml(v.check)}</b>: ${escapeHtml(v.detail)}</span>
         </li>
       `).join("");
+    }
+
+    let suggestionsHtml = "";
+    if (Array.isArray(msg.suggested_questions) && msg.suggested_questions.length > 0) {
+      const pills = msg.suggested_questions.map(sq => `
+        <button type="button" class="suggestion-pill-btn" onclick="submitSuggestedQuestion('${escapeJsString(sq)}')">
+          <span>💡</span> ${escapeHtml(sq)}
+        </button>
+      `).join("");
+
+      suggestionsHtml = `
+        <div class="suggested-questions-container" style="margin-top:1.25rem; padding-top:1rem; border-top:1px dashed #CBD5E1;">
+          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#0F766E; margin-bottom:0.625rem; display:flex; align-items:center; gap:0.35rem;">
+            <span>✨</span>
+            <span>AI Follow-Up Suggestions (Click to Analyze)</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+            ${pills}
+          </div>
+        </div>
+      `;
     }
 
     card.innerHTML = `
@@ -174,16 +298,16 @@ document.addEventListener("DOMContentLoaded", () => {
       ${msg.proof ? `
         <div>
           <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; margin-bottom:0.375rem;">
-            Mathematical Proof
+            Mathematical Proof &amp; Traceability
           </div>
-          <div class="proof-card">${escapeHtml(msg.proof)}</div>
+          <div class="proof-card" style="white-space:pre-wrap; font-family:Consolas, monospace; font-size:0.8125rem;">${escapeHtml(msg.proof)}</div>
         </div>
       ` : ""}
 
       <!-- Validation -->
       <div class="validation-card">
         <div style="font-size:0.8125rem; font-weight:700; color:#166534; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
-          Verification & Validation
+          Verification &amp; Validation
         </div>
         <ul class="validation-list">
           ${validationHtml}
@@ -202,6 +326,9 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
       ` : ""}
+
+      <!-- Suggested Next Questions -->
+      ${suggestionsHtml}
     `;
 
     chatMessages.appendChild(card);
@@ -218,6 +345,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  function escapeJsString(str) {
+    if (!str) return "";
+    return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
   }
 });
 

@@ -100,6 +100,10 @@ def create_app(config_name: str = "default") -> Flask:
                         conn.execute(text("ALTER TABLE analysis_messages ADD COLUMN selected_datasets VARCHAR(255)"))
                     if "selected_columns" not in existing_cols:
                         conn.execute(text("ALTER TABLE analysis_messages ADD COLUMN selected_columns VARCHAR(255)"))
+                    if "mode" not in existing_cols:
+                        conn.execute(text("ALTER TABLE analysis_messages ADD COLUMN mode VARCHAR(50) DEFAULT 'natural_language'"))
+                    if "suggested_questions" not in existing_cols:
+                        conn.execute(text("ALTER TABLE analysis_messages ADD COLUMN suggested_questions TEXT"))
                     conn.commit()
         except Exception:
             pass
